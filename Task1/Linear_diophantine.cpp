@@ -45,10 +45,18 @@ int main() {
         cout << "x = " << x << ", y = " << y << endl;
 
         // Verify
-        cout << "Check: " << a*x + b*y << " = " << c << endl;
+        cout << "Check: " << "ax + by" << " = " << c << endl;
     } else {
         cout << "No solution exists!" << endl;
     }
 
     return 0;
 }
+
+Input:
+Enter a, b, c: 15 25 5
+    
+Output:
+Solution exists!
+x = 2, y = -1
+Check: ax + by = 5
