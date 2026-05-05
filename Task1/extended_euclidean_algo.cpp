@@ -38,3 +38,11 @@ int main() {
 
     return 0;
 }
+
+Input:
+Enter two numbers (a and b): 161 28
+
+Output:
+x = -1
+y = 6
+Verification: 161(-1) + 28(6) = 7
