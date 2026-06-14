@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steganography Tool</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f9fa;
+    --surface: #ffffff;
+    --border: #e2e4e8;
+    --border2: #c8ccd4;
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-mid: #378ADD;
+    --blue-dark: #0C447C;
+    --teal: #0F6E56;
+    --teal-light: #E1F5EE;
+    --teal-mid: #1D9E75;
+    --green-light: #EAF3DE;
+    --green-dark: #27500A;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --text: #1a1c20;
+    --text-muted: #5f6270;
+    --text-hint: #9ca0ad;
+    --mono: 'Courier New', monospace;
+    --sans: system-ui, -apple-system, sans-serif;
+    --r: 8px;
+    --rl: 12px;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .hdr {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .hdr-icon {
+    width: 38px; height: 38px;
+    background: var(--blue-light);
+    border-radius: var(--r);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--blue);
+    font-size: 20px;
+  }
+  .hdr-title { font-size: 18px; font-weight: 500; color: var(--text); }
+  .hdr-sub { font-size: 13px; color: var(--text-muted); }
+
+  /* Tab bar */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 2rem;
+  }
+  .tab-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 0.85rem 1.25rem;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+  .tab-btn i { font-size: 17px; }
+
+  /* Main layout */
+  .wrap { max-width: 860px; margin: 0 auto; padding: 2rem; }
+
+  /* Info banner */
+  .info-banner {
+    background: var(--blue-light);
+    border: 1px solid #B5D4F4;
+    border-radius: var(--r);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 13.5px;
+    color: var(--blue-dark);
+    line-height: 1.65;
+  }
+  .info-banner p + p { margin-top: 6px; }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--rl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .card-title i { font-size: 16px; }
+
+  /* Drop zone */
+  .dropzone {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--r);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--bg);
+    position: relative;
+  }
+  .dropzone:hover, .dropzone.dragover { border-color: var(--blue-mid); background: var(--blue-light); }
+  .dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .dropzone i { font-size: 32px; color: var(--text-hint); display: block; margin-bottom: 8px; }
+  .dropzone .dz-label { font-size: 14px; color: var(--text-muted); }
+  .dropzone .dz-sub { font-size: 12px; color: var(--text-hint); margin-top: 4px; }
+  .dropzone.has-file { border-style: solid; border-color: var(--teal-mid); background: var(--teal-light); }
+  .dropzone.has-file i { color: var(--teal-mid); }
+  .dropzone.has-file .dz-label { color: var(--teal); font-weight: 500; }
+
+  /* Image preview */
+  .preview-wrap { margin-top: 1rem; display: none; }
+  .preview-wrap.show { display: block; }
+  .preview-img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: #f0f0f0;
+    display: block;
+  }
+  .img-meta {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .meta-pill {
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .meta-pill i { font-size: 13px; }
+
+  /* Capacity bar */
+  .cap-bar-wrap { margin-top: 12px; }
+  .cap-label { font-size: 13px; color: var(--text-muted); margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .cap-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .cap-fill { height: 100%; background: var(--blue-mid); border-radius: 3px; transition: width 0.3s; }
+  .cap-fill.warn { background: #EF9F27; }
+  .cap-fill.over { background: #E24B4A; }
+
+  /* Textarea / input */
+  label.field-label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+  textarea, input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 0.7rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    font-size: 14px;
+    font-family: var(--sans);
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+  textarea:focus, input[type="text"]:focus, input[type="password"]:focus { border-color: var(--blue-mid); }
+  textarea { min-height: 100px; line-height: 1.6; }
+
+  /* Char count */
+  .char-count { font-size: 12px; color: var(--text-hint); text-align: right; margin-top: 4px; }
+  .char-count.warn { color: #BA7517; }
+  .char-count.over { color: #A32D2D; }
+
+  /* Password row */
+  .pw-row { display: flex; gap: 10px; align-items: flex-end; }
+  .pw-row > div { flex: 1; }
+  .pw-toggle {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center;
+  }
+  .pw-toggle:hover { border-color: var(--border2); color: var(--text); }
+
+  /* Buttons */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 0.65rem 1.5rem;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: var(--r);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--blue-dark); }
+  .btn-primary:disabled { background: var(--border2); cursor: not-allowed; }
+  .btn-primary i { font-size: 17px; }
+
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 0.65rem 1.25rem;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: var(--r);
+    font-size: 14px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-outline:hover { background: var(--bg); border-color: var(--text-hint); }
+  .btn-outline i { font-size: 16px; }
+
+  .action-row { display: flex; gap: 10px; align-items: center; margin-top: 1.25rem; flex-wrap: wrap; }
+
+  /* Result area */
+  .result-box {
+    border-radius: var(--r);
+    padding: 1rem 1.25rem;
+    margin-top: 1.25rem;
+    font-size: 14px;
+    display: none;
+  }
+  .result-box.success {
+    background: var(--green-light);
+    border: 1px solid #C0DD97;
+    color: var(--green-dark);
+    display: block;
+  }
+  .result-box.error {
+    background: var(--red-light);
+    border: 1px solid #F7C1C1;
+    color: var(--red);
+    display: block;
+  }
+  .result-box .res-title { font-weight: 500; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .result-box i { font-size: 16px; }
+
+  /* Decoded message */
+  .decoded-msg {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 1rem;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text);
+    margin-top: 1rem;
+    min-height: 60px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.7;
+    display: none;
+  }
+
+  /* Download btn */
+  .dl-wrap { margin-top: 1rem; display: none; }
+  .dl-wrap.show { display: flex; align-items: center; gap: 10px; }
+  .dl-preview { width: 56px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); background: #eee; }
+
+  /* How it works */
+  .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .how-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 1rem;
+  }
+  .how-num { font-size: 22px; font-weight: 500; color: var(--blue); margin-bottom: 6px; }
+  .how-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .how-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+  /* Hidden canvas */
+  #work-canvas { display: none; }
+
+  /* Separator */
+  .sep { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+  /* Tabs content */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 1rem; }
+    .hdr { padding: 1rem; }
+    .tabs { padding: 0 1rem; }
+    .pw-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Steganography tool — hide and reveal secret messages inside images using LSB pixel manipulation</h2>
+
+<canvas id="work-canvas"></canvas>
+
+<div class="hdr">
+  <div class="hdr-icon"><i class="ti ti-eye-off" aria-hidden="true"></i></div>
+  <div>
+    <div class="hdr-title">Steganography</div>
+    <div class="hdr-sub">Hide secret messages inside images — invisible to the naked eye</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('encode')" id="tab-encode">
+    <i class="ti ti-lock" aria-hidden="true"></i> Encode
+  </button>
+  <button class="tab-btn" onclick="switchTab('decode')" id="tab-decode">
+    <i class="ti ti-lock-open" aria-hidden="true"></i> Decode
+  </button>
+  <button class="tab-btn" onclick="switchTab('howto')" id="tab-howto">
+    <i class="ti ti-info-circle" aria-hidden="true"></i> How it works
+  </button>
+</div>
+
+<!-- ═══════════ ENCODE ═══════════ -->
+<div class="wrap">
+<div class="tab-panel active" id="panel-encode">
+
+  <div class="info-banner">
+    <p>Choose a PNG or BMP image, type your secret message, then click <strong>Encode &amp; download</strong>. The hidden message will be embedded in the image's pixel data — visually identical to the original.</p>
+    <p>All processing happens locally in your browser. No data is sent to any server.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-photo" aria-hidden="true"></i> Cover image</div>
+    <div class="dropzone" id="enc-dropzone">
+      <input type="file" id="enc-file" accept="image/png,image/bmp" onchange="encFileSelected(event)">
+      <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+      <div class="dz-label">Click or drag an image here</div>
+      <div class="dz-sub">PNG or BMP recommended · JPEG not supported (lossy)</div>
+    </div>
+
+    <div class="preview-wrap" id="enc-preview-wrap">
+      <img id="enc-preview" class="preview-img" alt="Cover image preview">
+      <div class="img-meta" id="enc-meta"></div>
+      <div class="cap-bar-wrap" id="enc-cap-wrap">
+        <div class="cap-label">
+          <span>Message capacity used</span>
+          <span id="enc-cap-pct">0%</span>
+        </div>
+        <div class="cap-track"><div class="cap-fill" id="enc-cap-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-message" aria-hidden="true"></i> Secret message</div>
+    <label class="field-label" for="enc-msg">Message to hide</label>
+    <textarea id="enc-msg" placeholder="Type your secret message here…" oninput="encMsgChanged()"></textarea>
+    <div class="char-count" id="enc-char-count">0 characters</div>
+
+    <div class="sep"></div>
+
+    <label class="field-label" for="enc-pw">Password (optional)</label>
+    <div class="pw-row">
+      <div>
+        <input type="password" id="enc-pw" placeholder="Leave blank for no password protection">
+      </div>
+      <button class="pw-toggle" onclick="togglePw('enc-pw')" title="Show/hide password" aria-label="Toggle password visibility">
+        <i class="ti ti-eye" id="enc-pw-icon" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn-primary" id="enc-btn" onclick="encodeImage()" disabled>
+      <i class="ti ti-lock"></i> Encode &amp; download
+    </button>
+    <button class="btn-outline" onclick="encReset()"><i class="ti ti-refresh"></i> Reset</button>
+  </div>
+
+  <div class="result-box" id="enc-result"></div>
+
+  <div class="dl-wrap" id="enc-dl-wrap">
+    <img id="enc-dl-thumb" class="dl-preview" alt="">
+    <div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:4px;">Image ready to download</div>
+      <div style="font-size:13px;color:var(--text-muted);">The message is hidden inside the pixel data.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ DECODE ═══════════ -->
+<div class="tab-panel" id="panel-decode">
+
+  <div class="info-banner">
+    <p>To reveal a hidden message, choose the encoded image and click <strong>Decode</strong>. If the message was password-protected, enter the same password used during encoding.</p>
+    <p>Neither the image nor the revealed message will leave your browser at any point.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-photo-search" aria-hidden="true"></i> Encoded image</div>
+    <div class="dropzone" id="dec-dropzone">
+      <input type="file" id="dec-file" accept="image/png,image/bmp" onchange="decFileSelected(event)">
+      <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+      <div class="dz-label">Click or drag the encoded image here</div>
+      <div class="dz-sub">Must be the PNG output from the encoder</div>
+    </div>
+
+    <div class="preview-wrap" id="dec-preview-wrap">
+      <img id="dec-preview" class="preview-img" alt="Encoded image preview">
+      <div class="img-meta" id="dec-meta"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-key" aria-hidden="true"></i> Password</div>
+    <label class="field-label" for="dec-pw">Password (if the message was protected)</label>
+    <div class="pw-row">
+      <div>
+        <input type="password" id="dec-pw" placeholder="Leave blank if no password was set">
+      </div>
+      <button class="pw-toggle" onclick="togglePw('dec-pw')" title="Show/hide password" aria-label="Toggle password visibility">
+        <i class="ti ti-eye" id="dec-pw-icon" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn-primary" id="dec-btn" onclick="decodeImage()" disabled>
+      <i class="ti ti-lock-open"></i> Decode
+    </button>
+    <button class="btn-outline" onclick="decReset()"><i class="ti ti-refresh"></i> Reset</button>
+  </div>
+
+  <div class="result-box" id="dec-result"></div>
+
+  <div class="decoded-msg" id="dec-msg-out"></div>
+
+  <div class="action-row" id="dec-copy-row" style="display:none;">
+    <button class="btn-outline" onclick="copyDecoded()"><i class="ti ti-copy"></i> Copy message</button>
+  </div>
+
+</div>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<div class="tab-panel" id="panel-howto">
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-bulb" aria-hidden="true"></i> LSB steganography</div>
+    <p style="font-size:14px;color:var(--text-muted);line-height:1.75;margin-bottom:1.25rem;">
+      This tool uses <strong>Least Significant Bit (LSB)</strong> steganography — a technique that hides data by replacing the least significant bit of each colour channel in an image's pixels. Changing only the last bit alters a pixel's value by at most 1, making the difference invisible to human eyes.
+    </p>
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-num">01</div>
+        <div class="how-title">Convert message to bits</div>
+        <div class="how-desc">Each character in your message is converted to its ASCII or Unicode binary value (8 bits per character).</div>
+      </div>
+      <div class="how-card">
+        <div class="how-num">02</div>
+        <div class="how-title">Embed in pixel channels</div>
+        <div class="how-desc">Each bit of the message replaces the last bit of a colour channel (R, G, or B) in sequential pixels.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-num">03</div>
+        <div class="how-title">Mark the end</div>
+        <div class="how-desc">A special null terminator sequence (00000000) marks where the message ends so the decoder knows when to stop.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-num">04</div>
+        <div class="how-title">Save as lossless PNG</div>
+        <div class="how-desc">The modified image is saved as PNG — lossless compression ensures the hidden bits are never altered or lost.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-math" aria-hidden="true"></i> Capacity formula</div>
+    <p style="font-size:14px;color:var(--text-muted);line-height:1.75;margin-bottom:1rem;">
+      Each pixel has 3 colour channels (R, G, B), each holding 1 hidden bit. A message character needs 8 bits.
+    </p>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:1rem;font-family:var(--mono);font-size:13px;color:var(--text);line-height:2;">
+      Max characters = floor( (width × height × 3) / 8 ) − 1<br>
+      <span style="color:var(--text-muted)">Example: 800×600 image → 180,000 pixels → 540,000 bits → 67,500 chars</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-lock" aria-hidden="true"></i> Password protection</div>
+    <p style="font-size:14px;color:var(--text-muted);line-height:1.75;">
+      When a password is set, the message characters are XOR-shifted using a simple key derived from the password before embedding. This adds a layer of obfuscation — the correct password is required to decode the message. For strong security, combine with proper encryption tools.
+    </p>
+  </div>
+
+</div>
+</div>
+
+<script>
+const canvas = document.getElementById('work-canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+let encImg = null, encCapacity = 0;
+let decImg = null;
+
+// ─── Tabs ────────────────────────────────────────────────────────────
+function switchTab(name) {
+  ['encode','decode','howto'].forEach(t => {
+    document.getElementById('panel-'+t).classList.toggle('active', t===name);
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+  });
+}
+
+// ─── Password toggle ─────────────────────────────────────────────────
+function togglePw(id) {
+  const inp = document.getElementById(id);
+  const ico = document.getElementById(id+'-icon');
+  if (inp.type === 'password') { inp.type='text'; ico.className='ti ti-eye-off'; }
+  else { inp.type='password'; ico.className='ti ti-eye'; }
+}
+
+// ─── Dragover feedback ───────────────────────────────────────────────
+['enc-dropzone','dec-dropzone'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('dragover'); });
+});
+
+// ─── Encode: file selected ───────────────────────────────────────────
+function encFileSelected(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    encImg = img;
+    const dz = document.getElementById('enc-dropzone');
+    dz.classList.add('has-file');
+    dz.querySelector('.dz-label').textContent = file.name;
+    dz.querySelector('.dz-sub').textContent = `${img.width} × ${img.height} px · ${(file.size/1024).toFixed(0)} KB`;
+    document.getElementById('enc-preview').src = url;
+    document.getElementById('enc-preview-wrap').classList.add('show');
+    encCapacity = Math.floor((img.width * img.height * 3) / 8) - 1;
+    document.getElementById('enc-meta').innerHTML =
+      `<div class="meta-pill"><i class="ti ti-arrows-maximize" aria-hidden="true"></i>${img.width} × ${img.height}</div>
+       <div class="meta-pill"><i class="ti ti-file" aria-hidden="true"></i>${(file.size/1024).toFixed(0)} KB</div>
+       <div class="meta-pill"><i class="ti ti-text-size" aria-hidden="true"></i>Capacity: ${encCapacity.toLocaleString()} chars</div>`;
+    document.getElementById('enc-btn').disabled = false;
+    encMsgChanged();
+  };
+  img.src = url;
+}
+
+function encMsgChanged() {
+  const msg = document.getElementById('enc-msg').value;
+  const len = msg.length;
+  const cc = document.getElementById('enc-char-count');
+  if (encCapacity > 0) {
+    const pct = Math.min(100, Math.round((len / encCapacity) * 100));
+    const fill = document.getElementById('enc-cap-fill');
+    document.getElementById('enc-cap-pct').textContent = pct + '%';
+    fill.style.width = pct + '%';
+    fill.className = 'cap-fill' + (pct >= 100 ? ' over' : pct >= 80 ? ' warn' : '');
+    cc.className = 'char-count' + (len > encCapacity ? ' over' : len > encCapacity * 0.8 ? ' warn' : '');
+    cc.textContent = `${len.toLocaleString()} / ${encCapacity.toLocaleString()} characters`;
+  } else {
+    cc.textContent = `${len} characters`;
+  }
+}
+
+// ─── XOR obfuscation ────────────────────────────────────────────────
+function xorMsg(msg, pw) {
+  if (!pw) return msg;
+  let out = '';
+  for (let i = 0; i < msg.length; i++) {
+    out += String.fromCharCode(msg.charCodeAt(i) ^ pw.charCodeAt(i % pw.length));
+  }
+  return out;
+}
+
+// ─── LSB encode ─────────────────────────────────────────────────────
+function encodeImage() {
+  const msg = document.getElementById('enc-msg').value;
+  const pw = document.getElementById('enc-pw').value;
+  if (!encImg) { showResult('enc-result','error','No image selected.'); return; }
+  if (!msg) { showResult('enc-result','error','Please enter a message to hide.'); return; }
+  const processed = xorMsg(msg, pw) + '\0';
+  if (processed.length > encCapacity + 1) {
+    showResult('enc-result','error',`Message too long (${msg.length} chars). This image can hold up to ${encCapacity} characters.`); return;
+  }
+
+  canvas.width = encImg.width;
+  canvas.height = encImg.height;
+  ctx.drawImage(encImg, 0, 0);
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const pixels = imgData.data;
+
+  let bitIdx = 0;
+  for (let ci = 0; ci < processed.length; ci++) {
+    const code = processed.charCodeAt(ci);
+    for (let b = 7; b >= 0; b--) {
+      const bit = (code >> b) & 1;
+      const pxChannel = bitIdx;
+      const pxBase = Math.floor(pxChannel / 3) * 4 + (pxChannel % 3);
+      pixels[pxBase] = (pixels[pxBase] & ~1) | bit;
+      bitIdx++;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'stego-image.png'; a.click();
+    const thumb = document.getElementById('enc-dl-thumb');
+    thumb.src = url;
+    document.getElementById('enc-dl-wrap').classList.add('show');
+    showResult('enc-result','success',`Message successfully hidden (${msg.length} characters, ${processed.length * 8} bits used). The image has been downloaded.`);
+  }, 'image/png');
+}
+
+// ─── Decode: file selected ───────────────────────────────────────────
+function decFileSelected(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    decImg = img;
+    const dz = document.getElementById('dec-dropzone');
+    dz.classList.add('has-file');
+    dz.querySelector('.dz-label').textContent = file.name;
+    dz.querySelector('.dz-sub').textContent = `${img.width} × ${img.height} px · ${(file.size/1024).toFixed(0)} KB`;
+    document.getElementById('dec-preview').src = url;
+    document.getElementById('dec-preview-wrap').classList.add('show');
+    document.getElementById('dec-meta').innerHTML =
+      `<div class="meta-pill"><i class="ti ti-arrows-maximize" aria-hidden="true"></i>${img.width} × ${img.height}</div>
+       <div class="meta-pill"><i class="ti ti-file" aria-hidden="true"></i>${(file.size/1024).toFixed(0)} KB</div>`;
+    document.getElementById('dec-btn').disabled = false;
+  };
+  img.src = url;
+}
+
+// ─── LSB decode ─────────────────────────────────────────────────────
+function decodeImage() {
+  if (!decImg) { showResult('dec-result','error','No image selected.'); return; }
+  const pw = document.getElementById('dec-pw').value;
+
+  canvas.width = decImg.width;
+  canvas.height = decImg.height;
+  ctx.drawImage(decImg, 0, 0);
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const pixels = imgData.data;
+
+  let bits = '';
+  let chars = '';
+  const maxBits = pixels.length * 3 / 4 * 3; // R,G,B only skip alpha
+
+  for (let pxChannel = 0; pxChannel < Math.floor(pixels.length * 3 / 4); pxChannel++) {
+    const pxBase = Math.floor(pxChannel / 3) * 4 + (pxChannel % 3);
+    bits += (pixels[pxBase] & 1);
+    if (bits.length === 8) {
+      const code = parseInt(bits, 2);
+      bits = '';
+      if (code === 0) break;
+      chars += String.fromCharCode(code);
+      if (chars.length > 100000) break;
+    }
+  }
+
+  if (!chars) {
+    showResult('dec-result','error','No hidden message found in this image. Make sure it was encoded with this tool and saved as PNG.');
+    document.getElementById('dec-msg-out').style.display = 'none';
+    document.getElementById('dec-copy-row').style.display = 'none';
+    return;
+  }
+
+  const decoded = xorMsg(chars, pw);
+  const out = document.getElementById('dec-msg-out');
+  out.textContent = decoded;
+  out.style.display = 'block';
+  document.getElementById('dec-copy-row').style.display = 'flex';
+  showResult('dec-result','success',`Message decoded successfully — ${decoded.length} character${decoded.length !== 1 ? 's' : ''} found.${pw ? ' Password was applied.' : ''}`);
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────
+function showResult(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = 'result-box ' + type;
+  const icon = type === 'success' ? 'ti-circle-check' : 'ti-alert-circle';
+  el.innerHTML = `<div class="res-title"><i class="ti ${icon}" aria-hidden="true"></i>${type === 'success' ? 'Success' : 'Error'}</div>${msg}`;
+}
+
+function copyDecoded() {
+  navigator.clipboard.writeText(document.getElementById('dec-msg-out').textContent);
+}
+
+function encReset() {
+  encImg = null; encCapacity = 0;
+  document.getElementById('enc-file').value = '';
+  document.getElementById('enc-msg').value = '';
+  document.getElementById('enc-pw').value = '';
+  document.getElementById('enc-preview-wrap').classList.remove('show');
+  document.getElementById('enc-dropzone').classList.remove('has-file');
+  document.getElementById('enc-dropzone').querySelector('.dz-label').textContent = 'Click or drag an image here';
+  document.getElementById('enc-dropzone').querySelector('.dz-sub').textContent = 'PNG or BMP recommended · JPEG not supported (lossy)';
+  document.getElementById('enc-result').className = 'result-box';
+  document.getElementById('enc-dl-wrap').classList.remove('show');
+  document.getElementById('enc-btn').disabled = true;
+  document.getElementById('enc-char-count').textContent = '0 characters';
+  document.getElementById('enc-cap-fill').style.width = '0%';
+  document.getElementById('enc-cap-pct').textContent = '0%';
+}
+
+function decReset() {
+  decImg = null;
+  document.getElementById('dec-file').value = '';
+  document.getElementById('dec-pw').value = '';
+  document.getElementById('dec-preview-wrap').classList.remove('show');
+  document.getElementById('dec-dropzone').classList.remove('has-file');
+  document.getElementById('dec-dropzone').querySelector('.dz-label').textContent = 'Click or drag the encoded image here';
+  document.getElementById('dec-dropzone').querySelector('.dz-sub').textContent = 'Must be the PNG output from the encoder';
+  document.getElementById('dec-result').className = 'result-box';
+  document.getElementById('dec-msg-out').style.display = 'none';
+  document.getElementById('dec-copy-row').style.display = 'none';
+  document.getElementById('dec-btn').disabled = true;
+}
+</script>
+</body>
+</html>
